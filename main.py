@@ -1,4 +1,5 @@
 import time
+import gzip
 
 import numpy as np
 import scipy as sp
@@ -73,12 +74,14 @@ def get_B_from_A(matrix, param):
 
 path = "D:\_Matrix\\"
 fileName = "utm5940.mtx.gz"
+fileName2 = "apache1.tar.gz"
 alpha = -550
+file = gzip.open(path + fileName2, 'rb')
 
-A = sp.sparse.csc_matrix(spio.mmread(path + fileName).tocsc())
+A = spio.mmread(path + fileName).tocsc()
 n = A.shape[0]
 b = A.dot(np.ones(n))
-B = get_B_from_A(A, alpha)  # B = sp.sparse.csc_matrix(get_B_from_A_array(A.toarray(), alpha))
+B = get_B_from_A(A, alpha)
 
 print("size:", n, "alpha:", alpha)
 
