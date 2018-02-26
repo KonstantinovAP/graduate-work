@@ -1,8 +1,6 @@
 import time
-import gzip
 
 import numpy as np
-import scipy as sp
 import scipy.io as spio
 import scipy.sparse.linalg as spla
 
@@ -35,7 +33,7 @@ def residual(x):
 
 
 def residual_precond(x):
-    return np.linalg.solve(B, residual(x))
+    return np.linalg.solve(get_B_from_A(A, alpha), residual(x))
 
 
 def get_data_diag(diag_count, dimention, mult=False):
@@ -56,13 +54,6 @@ def get_diags_numbering(diags_cnt):
     return diags
 
 
-def get_B_from_A_array(matrix, param):
-    result = matrix
-    for i in range(n):
-        result[i][i] = matrix[i][i] - param
-    return matrix
-
-
 def get_B_from_A(matrix, param):
     result = matrix
     for i in range(n):
@@ -74,16 +65,15 @@ def get_B_from_A(matrix, param):
 
 path = "D:\_Matrix\\"
 fileName = "utm5940.mtx.gz"
-fileName2 = "apache1.tar.gz"
+fileName2 = "apache1.mtx"
 alpha = -550
-file = gzip.open(path + fileName2, 'rb')
 
-A = spio.mmread(path + fileName).tocsc()
+A = spio.mmread(path + fileName2).tocsc()
 n = A.shape[0]
 b = A.dot(np.ones(n))
-B = get_B_from_A(A, alpha)
 
 print("size:", n, "alpha:", alpha)
+print("----------------------------------")
 
 ### lGMRES
 start = time.time()
@@ -92,9 +82,12 @@ stop = time.time()
 print("lGMRES. Time= ", stop - start)
 print("Result =", res_x)
 
+print("----------------------------------")
+
 ###lGMRES ilu
 start = time.time()
 M2 = spla.spilu(A)
+print("ilu. Time= ", time.time() - start)
 M_x = lambda x: M2.solve(x)
 M = spla.LinearOperator((n, n), M_x)
 res_x = spla.lgmres(A, b, M=M)
@@ -102,9 +95,11 @@ stop = time.time()
 print("lGMRES + ilu. Time= ", stop - start)
 print("Result =", res_x)
 
+print("----------------------------------")
+
 ###lGMRES B(a)
 start = time.time()
-M_x = lambda x: spla.lgmres(B, x)[0]
+M_x = lambda x: A * x - alpha * x
 M = spla.LinearOperator((n, n), M_x)
 res_x = spla.lgmres(A, b, M=M)
 stop = time.time()
